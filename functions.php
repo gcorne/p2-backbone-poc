@@ -5,8 +5,11 @@ class P3 {
 	
 	static function bind_hooks() {
 		add_action( 'wp_head', array( __CLASS__, 'enqueue_scripts' ), 1, 1 );
+		add_action( 'wp_head', array( __CLASS__, 'print_inline_js' ), 100, 1 );
 		add_action( 'wp_ajax_nopriv_p3_posts', array( 'P3_Ajax', 'posts' ) );
 		add_action( 'wp_ajax_p3_posts', array( 'P3_Ajax', 'posts' ) );
+		add_action( 'wp_ajax_nopriv_p3_comments', array( 'P3_Ajax', 'comments' ) );
+		add_action( 'wp_ajax_p3_comments', array( 'P3_Ajax', 'comments' ) );
 	}
 
 	static function enqueue_scripts() {
@@ -14,6 +17,17 @@ class P3 {
 		wp_enqueue_script( 'p3-backbone', get_stylesheet_directory_uri() . '/js/backbone.js', array( 'p3-underscore', 'jquery' ), '0.9.10' );
 		wp_enqueue_script( 'p3-main', get_stylesheet_directory_uri() . '/js/main.js', array( 'jquery', 'p3-backbone' ), '1.0' );
 	}
+
+	static function print_inline_js() {
+		$ajax_url = P3_Ajax::ajaxURl();
+?>
+		<script>
+			var ajaxUrl = '<?php echo $ajax_url; ?>';
+		</script>
+<?php
+	}
+
+
 
 }
 
@@ -39,6 +53,26 @@ class P3_Ajax {
 		$posts->json_response();
 	}
 
+	static function comments() {
+		$post_id = (int) $_REQUEST['post_id'];
+
+		$query = new WP_Comment_Query;
+		$comments = $query->query( array( 'post_id' => $post_id ) );
+		$p3_comments = new P3_Comments( $comments );
+		$p3_comments->json_response();
+
+	}
+
+	static function ajaxURL() {
+		global $current_blog;
+
+		// Generate the ajax url based on the current scheme
+		$admin_url = admin_url( 'admin-ajax.php', is_ssl() ? 'https' : 'http' );
+		// If present, take domain mapping into account
+		if ( isset( $current_blog->primary_redirect ) )
+			$admin_url = preg_replace( '|https?://' . preg_quote( $current_blog->domain ) . '|', 'http://' . $current_blog->primary_redirect, $admin_url );
+		return $admin_url;
+	}
 }
 
 
@@ -87,6 +121,23 @@ class P3_Posts {
 		die();
 	}
 
+}
+
+class P3_Comments {
+
+	function __construct( $comments = null ) {
+		$this->comments = $comments;
+	}
+
+	function to_json( ) {
+		return json_encode( $this->comments );
+	}
+
+	function json_response() {
+		header( 'Content-type: application/json' );
+		echo $this->to_json();
+		die();
+	}
 }
 
 class P3_Authors {
