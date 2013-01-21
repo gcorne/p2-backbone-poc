@@ -10,6 +10,8 @@ class P3 {
 		add_action( 'wp_ajax_p3_posts', array( 'P3_Ajax', 'posts' ) );
 		add_action( 'wp_ajax_nopriv_p3_comments', array( 'P3_Ajax', 'comments' ) );
 		add_action( 'wp_ajax_p3_comments', array( 'P3_Ajax', 'comments' ) );
+		add_action( 'wp_ajax_nopriv_p3_comment', array( 'P3_Ajax', 'comment' ) );
+		add_action( 'wp_ajax_p3_comment', array( 'P3_Ajax', 'comment' ) );
 	}
 
 	static function enqueue_scripts() {
@@ -51,6 +53,24 @@ class P3_Ajax {
 		$query = new WP_Query( array( 'post_type' => 'post', 'post_status' => 'publish' ) );
 		$posts = new P3_Posts( $query );
 		$posts->json_response();
+	}
+	
+	static function comment() {
+		if ( isset( $_POST ) ) {
+			$comment = (array) json_decode( stripslashes( $_POST['model'] ) );
+			switch( $_POST['method'] ) {
+				case 'create':
+					$id = wp_insert_comment( $comment );
+					if ( $id ) {
+						$inserted_comment = get_comment( $id );
+						header('Content-type: application/json');
+						echo json_encode( $inserted_comment );
+						die();
+					}
+				break;
+			}
+
+		}
 	}
 
 	static function comments() {

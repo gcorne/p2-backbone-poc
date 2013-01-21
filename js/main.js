@@ -39,7 +39,9 @@ Backbone.sync = function(method, model, options) {
 }
 
 jQuery(function() {
-    P3.Comment = Backbone.Model.extend();
+    P3.Comment = Backbone.Model.extend({
+        action: 'p3_comment'   
+    });
 
     P3.CommentList = Backbone.Collection.extend({
         model: P3.Comment,
@@ -51,11 +53,28 @@ jQuery(function() {
 
     P3.CommentView = Backbone.View.extend({
         model: P3.Comment,
+        events: {
+            'click .reply' : 'reply',
+            'submit form': 'addComment'
+        },
 
         template: _.template(jQuery('#comment-tmpl').html()),
         render: function() {
             this.$el.html(this.template(this.model.toJSON()));
             return this;
+        },
+
+        reply: function() {
+            this.$el.append(jQuery('#reply-tmpl').html());
+        },
+
+        addComment: function(e) {
+            var name = this.$el.find('form [name="name"]').val();
+            var email = this.$el.find('form [name="email"]').val();
+            var comment = this.$el.find('form [name="comment"]').val();
+            this.model.collection.create({ comment_author: name, comment_content: comment, comment_author_email: email, comment_post_ID: this.model.collection.post.id });
+            this.$el.find('form').remove();
+            e.preventDefault();
         }
     });
 
@@ -75,7 +94,7 @@ jQuery(function() {
         addOne: function(comment) {
             var view = new P3.CommentView({ model: comment });
             this.$el.append(view.render().el);
-        }
+        },
     });
 
     P3.Post = Backbone.Model.extend({

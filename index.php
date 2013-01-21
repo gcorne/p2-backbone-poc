@@ -20,7 +20,16 @@ jQuery(function() {
 <script id="comment-tmpl" type="text/template">
     <li class="comment">
         <span class="author"><%- comment_author %></span>
-        <p><%- comment_content %></p>      
+        <p><%- comment_content %></p>
+        <span class="reply">reply</span>
     </li>
+</script>
+
+<script id="reply-tmpl" type="text/template">
+    <form>
+    <label for="">Name</label><input id="" type="text" name="name" />
+    <label for="">Email</label><input id="" type="text" name="email" />
+    <textarea id="" name="comment"></textarea><button>reply</button>
+    </form>
 </script>
 <?php get_footer(); ?>
