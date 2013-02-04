@@ -153,7 +153,8 @@ jQuery(function() {
 
         addOne: function(post) {
             var view = new P3.PostView({ model: post });
-            this.$el.append(view.render().el);
+			$container = jQuery('<div/>').addClass('container');
+            this.$el.append($container.append(view.render().el));
         }
 
     });
