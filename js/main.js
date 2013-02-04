@@ -5,6 +5,7 @@ Backbone.sync = function(method, model, options) {
     var params = {dataType: 'json'};
 
     params.url = ajaxUrl;
+	params.cache = false;
     params.data = {};
     // WordPress ajax action
     params.data.action = model.action;
