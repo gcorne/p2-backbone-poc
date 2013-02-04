@@ -2,47 +2,47 @@ P3 = {};
 App = {};
 
 Backbone.sync = function(method, model, options) {
-    var params = {dataType: 'json'};
+	var params = {dataType: 'json'};
 
-    params.url = ajaxUrl;
+	params.url = ajaxUrl;
 	params.cache = false;
-    params.data = {};
-    // WordPress ajax action
-    params.data.action = model.action;
-    params.data.method = method;
+	params.data = {};
+	// WordPress ajax action
+	params.data.action = model.action;
+	params.data.method = method;
 
-    params.contentType = 'application/x-www-form-urlencoded';
-    if ( method == 'create' || method == 'update' || method == 'patch' || method == 'delete' ) {
-        params.type = 'POST';
-        params.data.model = JSON.stringify(options.attrs || model.toJSON(options));
-    } else {
-        params.type = 'GET';
-        // options.data needs to be merged with params.data
-    }
+	params.contentType = 'application/x-www-form-urlencoded';
+	if ( method == 'create' || method == 'update' || method == 'patch' || method == 'delete' ) {
+		params.type = 'POST';
+		params.data.model = JSON.stringify(options.attrs || model.toJSON(options));
+	} else {
+		params.type = 'GET';
+		// options.data needs to be merged with params.data
+	}
 
 
-    var success = options.success;
-    options.success = function(resp) {
-      if (success) success(model, resp, options);
-      model.trigger('sync', model, resp, options);
-    };
+	var success = options.success;
+	options.success = function(resp) {
+		if (success) success(model, resp, options);
+		model.trigger('sync', model, resp, options);
+	};
 
-    var error = options.error;
-    options.error = function(xhr) {
-      if (error) error(model, xhr, options);
-      model.trigger('error', model, xhr, options);
-    };
+	var error = options.error;
+	options.error = function(xhr) {
+		if (error) error(model, xhr, options);
+		model.trigger('error', model, xhr, options);
+	};
 
-    // Make the request, allowing the user to override any Ajax options.
-    var xhr = options.xhr = Backbone.ajax(_.extend(params, options));
-    model.trigger('request', model, xhr, options);
-    return xhr;
+	// Make the request, allowing the user to override any Ajax options.
+	var xhr = options.xhr = Backbone.ajax(_.extend(params, options));
+	model.trigger('request', model, xhr, options);
+	return xhr;
 }
 
 jQuery(function() {
     P3.Comment = Backbone.Model.extend({
-        action: 'p3_comment',
-        idAttribute: 'comment_ID', 
+		action: 'p3_comment',
+		idAttribute: 'comment_ID', 
 		initialize: function(attributes) {
 			if(_.has(attributes, 'children')) {
 				this.children = new P3.CommentList(attributes.children);
@@ -50,15 +50,14 @@ jQuery(function() {
 			}
 		},
     });
-	// should all the comments be fetched and then the hierarchy created client
-	// side?
+
     P3.CommentList = Backbone.Collection.extend({
-        model: P3.Comment,
-        action: 'p3_comments',
+		model: P3.Comment,
+		action: 'p3_comments',
 		parent_id: 0,
-        load: function() {
-            this.fetch({ data: { action: this.action, post_id: this.post.id }});
-        },
+		load: function() {
+			this.fetch({ data: { action: this.action, post_id: this.post.id }});
+		},
 
 		parse: function(response) {
 			var byParent = _.groupBy(response, function(comment) { return comment.comment_parent });
@@ -88,102 +87,102 @@ jQuery(function() {
 		tagName: 'li',
 		className: 'comment',
 
-        model: P3.Comment,
-        events: {
-            'click .reply:first' : 'reply',
-            'submit form': 'addComment'
-        },
+		model: P3.Comment,
+		events: {
+			'click .reply:first' : 'reply',
+			'submit form': 'addComment'
+		},
 
-        template: _.template(jQuery('#comment-tmpl').html()),
-        render: function() {
-            this.$el.html(this.template(this.model.toJSON()));
+		template: _.template(jQuery('#comment-tmpl').html()),
+		render: function() {
+			this.$el.html(this.template(this.model.toJSON()));
 			if(_.has(this.model, 'children')) {
 				this.children = new P3.CommentsView({ model: this.model.children });
 				this.$el.append(this.children.el);
 			}
-            return this;
-        },
-
-        reply: function() {
-            this.$el.append(jQuery('#reply-tmpl').html());
-        },
-
-        addComment: function(e) {
-            var name = this.$el.find('form [name="name"]').val();
-            var email = this.$el.find('form [name="email"]').val();
-            var comment = this.$el.find('form [name="comment"]').val();
-            this.model.collection.create({ comment_author: name, comment_content: comment, comment_author_email: email, comment_post_ID: this.model.collection.post.id });
-            this.$el.find('form').remove();
-            e.preventDefault();
-        }
-    });
-
-    P3.CommentsView = Backbone.View.extend({
-        tagName: 'ul',
-		className: 'comments',
-        initialize: function() {
-            this.listenTo(this.model, 'add', this.addOne);
-            this.listenTo(this.model, 'reset', this.addAll);
-			this.addAll();
-        },
-		load: function() {
-            this.model.load();
+			return this;
 		},
-        addAll: function() {
-            this.model.each(this.addOne, this);
-        },
 
-        addOne: function(comment) {
-            var view = new P3.CommentView({ model: comment });
-            this.$el.append(view.render().el);
-        },
-    });
+		reply: function() {
+			this.$el.append(jQuery('#reply-tmpl').html());
+		},
 
-    P3.Post = Backbone.Model.extend({
-        idAttribute: 'ID', // yuck   
-        initialize: function() {
-            this.comments = new P3.CommentList();
-            this.comments.post = this;
+		addComment: function(e) {
+			var name = this.$el.find('form [name="name"]').val();
+			var email = this.$el.find('form [name="email"]').val();
+			var comment = this.$el.find('form [name="comment"]').val();
+			this.model.collection.create({ comment_author: name, comment_content: comment, comment_author_email: email, comment_post_ID: this.model.collection.post.id });
+			this.$el.find('form').remove();
+			e.preventDefault();
+		}
+	});
+
+	P3.CommentsView = Backbone.View.extend({
+		tagName: 'ul',
+		className: 'comments',
+		initialize: function() {
+			this.listenTo(this.model, 'add', this.addOne);
+			this.listenTo(this.model, 'reset', this.addAll);
+			this.addAll();
+		},
+		load: function() {
+			this.model.load();
+		},
+		addAll: function() {
+			this.model.each(this.addOne, this);
+		},
+
+		addOne: function(comment) {
+			var view = new P3.CommentView({ model: comment });
+			this.$el.append(view.render().el);
+		},
+	});
+
+	P3.Post = Backbone.Model.extend({
+		idAttribute: 'ID', // yuck   
+		initialize: function() {
+			this.comments = new P3.CommentList();
+			this.comments.post = this;
 			this.comments.load();
-        },
-        // update comments if comment count changes
-    });
+		},
+		// update comments if comment count changes
+	});
 
-    P3.Posts = Backbone.Collection.extend({
-        model: P3.Post,
-        action: 'p3_posts',
-    });
+	P3.Posts = Backbone.Collection.extend({
+		model: P3.Post,
+		action: 'p3_posts',
+	});
 
 
-    P3.PostView = Backbone.View.extend({
-        tagName: 'div',
+	P3.PostView = Backbone.View.extend({
+		tagName: 'div',
 		className: 'post',
 
-        template: _.template(jQuery('#post-tmpl').html()),
+		template: _.template(jQuery('#post-tmpl').html()),
 
-        events: {
-            'click .comments': 'showComments'
-        },
+		events: {
+			'click .comments': 'showComments'
+		},
 
-        initialize: function() {
-            this.listenTo(this.model, 'change', this.refresh);
-        },
+		initialize: function() {
+			this.listenTo(this.model, 'change', this.refresh);
+		},
 
-        render: function(loadComments) {
-            this.$el.html(this.template(this.model.toJSON()));
-            if ( this.commentsOpen == true && loadComments == true) this.showComments();
-            return this;
-        },
+		render: function(loadComments) {
+			this.$el.html(this.template(this.model.toJSON()));
+			if ( this.commentsOpen == true && loadComments == true) this.showComments();
+			return this;
+		},
 
 		refresh: function() {
 			this.render(false);
 		},
 
-        showComments: function() {
-            this.commentsOpen = true;
-            this.commentList = new P3.CommentsView({ model: this.model.comments });
-            this.$el.after(this.commentList.el);
-        },
+		showComments: function() {
+			this.commentsOpen = true;
+			this.commentList = new P3.CommentsView({ model: this.model.comments });
+			this.$el.after(this.commentList.el);
+		},
 
 		toggleComments: function() {
 
@@ -193,34 +192,34 @@ jQuery(function() {
 
 		}
 
-    });
+	});
 
-    P3.AppView = Backbone.View.extend({
-        el: jQuery('#main'),
+	P3.AppView = Backbone.View.extend({
+		el: jQuery('#main'),
 
-        initialize: function() {
-            this.listenTo(App.Posts, 'add', this.addOne);
-            this.listenTo(App.Posts, 'reset', this.addAll);
-        },
+		initialize: function() {
+			this.listenTo(App.Posts, 'add', this.addOne);
+			this.listenTo(App.Posts, 'reset', this.addAll);
+		},
 
 
-        addAll: function() {
-            App.Posts.each(this.addOne, this);
-        },
+		addAll: function() {
+			App.Posts.each(this.addOne, this);
+		},
 
-        addOne: function(post) {
-            var view = new P3.PostView({ model: post });
+		addOne: function(post) {
+			var view = new P3.PostView({ model: post });
 			$container = jQuery('<div/>').addClass('container');
-            this.$el.append($container.append(view.render().el));
-        }
+			this.$el.append($container.append(view.render().el));
+		}
 
-    });
+	});
 
-    App.Posts = new P3.Posts;
-    App.View = new P3.AppView;
-    
-    setInterval(function() {
-        App.Posts.fetch({update: true, remove: false});
-    }, 10000);
-    
+	App.Posts = new P3.Posts;
+	App.View = new P3.AppView;
+
+	setInterval(function() {
+		App.Posts.fetch({update: true, remove: false});
+	}, 10000);
+
 });
