@@ -130,6 +130,7 @@ class P3_Posts {
 	function add_meta( $post ) {
 		$post->permalink = get_permalink( $post->ID );
 		$post->format = get_post_format( $post->ID );
+		$post->avatar = get_avatar( $post->post_author );
 	}
 
 
@@ -149,6 +150,17 @@ class P3_Comments {
 
 	function __construct( $comments = null ) {
 		$this->comments = $comments;
+		$this->set_avatars();
+	}
+
+	function set_avatars() {
+		foreach( $this->comments as $comment ) {
+			if ( ! empty( $comment->user_id ) ) {
+				$comment->avatar = get_avatar( $comment->user_id );
+			} else {
+				$comment->avatar = get_avatar( $comment->comment_author_email );
+			}
+		}
 	}
 
 	function to_json( ) {
