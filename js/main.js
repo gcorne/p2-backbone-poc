@@ -182,14 +182,6 @@ jQuery(function() {
 			this.commentsOpen = true;
 			this.commentList = new P3.CommentsView({ model: this.model.comments });
 			this.$el.after(this.commentList.el);
-		},
-
-		toggleComments: function() {
-
-		},
-
-		commentCount: function() {
-
 		}
 
 	});
