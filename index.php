@@ -1,6 +1,6 @@
 <?php $p3_posts = new P3_Posts(); ?>
 <?php get_header(); ?>
-<div id="main">
+<div id="main" class="container">
 
 </div>
 
