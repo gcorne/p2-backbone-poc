@@ -41,27 +41,66 @@ Backbone.sync = function(method, model, options) {
 
 jQuery(function() {
     P3.Comment = Backbone.Model.extend({
-        action: 'p3_comment'   
+        action: 'p3_comment',
+        idAttribute: 'comment_ID', 
+		initialize: function(attributes) {
+			if(_.has(attributes, 'children')) {
+				this.children = new P3.CommentList(attributes.children);
+				this.unset('children', {silent: true});
+			}
+		},
     });
-
+	// should all the comments be fetched and then the hierarchy created client
+	// side?
     P3.CommentList = Backbone.Collection.extend({
         model: P3.Comment,
         action: 'p3_comments',
-        loadComments: function() {
+		parent_id: 0,
+        load: function() {
             this.fetch({ data: { action: this.action, post_id: this.post.id }});
-        }
+        },
+
+		parse: function(response) {
+			var byParent = _.groupBy(response, function(comment) { return comment.comment_parent });
+			var tree = this.buildTree(byParent);
+			return tree;
+		},
+
+		buildTree: function(byParent) {
+			var tree = byParent[0];
+			_.each(tree, function(comment, index, tree) {
+				this.addChildren(tree, comment, byParent);
+			}, this);
+			return tree;
+		},
+
+		addChildren: function(tree, comment, byParent) {
+			if(_.has(byParent, comment.comment_ID)) {
+				comment.children = byParent[comment.comment_ID];
+				_.each(comment.children, function(comment) {
+					this.addChildren(tree, comment, byParent);
+				}, this);
+			}
+		}
     });
 
     P3.CommentView = Backbone.View.extend({
+		tagName: 'li',
+		className: 'comment',
+
         model: P3.Comment,
         events: {
-            'click .reply' : 'reply',
+            'click .reply:first' : 'reply',
             'submit form': 'addComment'
         },
 
         template: _.template(jQuery('#comment-tmpl').html()),
         render: function() {
             this.$el.html(this.template(this.model.toJSON()));
+			if(_.has(this.model, 'children')) {
+				this.children = new P3.CommentsView({ model: this.model.children });
+				this.$el.append(this.children.el);
+			}
             return this;
         },
 
@@ -81,13 +120,15 @@ jQuery(function() {
 
     P3.CommentsView = Backbone.View.extend({
         tagName: 'ul',
-
+		className: 'comments',
         initialize: function() {
-            this.model.loadComments();
             this.listenTo(this.model, 'add', this.addOne);
             this.listenTo(this.model, 'reset', this.addAll);
+			this.addAll();
         },
-
+		load: function() {
+            this.model.load();
+		},
         addAll: function() {
             this.model.each(this.addOne, this);
         },
@@ -103,6 +144,7 @@ jQuery(function() {
         initialize: function() {
             this.comments = new P3.CommentList();
             this.comments.post = this;
+			this.comments.load();
         },
         // update comments if comment count changes
     });
@@ -115,6 +157,7 @@ jQuery(function() {
 
     P3.PostView = Backbone.View.extend({
         tagName: 'div',
+		className: 'post',
 
         template: _.template(jQuery('#post-tmpl').html()),
 
@@ -123,18 +166,32 @@ jQuery(function() {
         },
 
         initialize: function() {
-            this.listenTo(this.model, 'change', this.render);
+            this.listenTo(this.model, 'change', this.refresh);
         },
 
-        render: function() {
+        render: function(loadComments) {
             this.$el.html(this.template(this.model.toJSON()));
+            if ( this.commentsOpen == true && loadComments == true) this.showComments();
             return this;
         },
 
+		refresh: function() {
+			this.render(false);
+		},
+
         showComments: function() {
+            this.commentsOpen = true;
             this.commentList = new P3.CommentsView({ model: this.model.comments });
-            this.$el.append(this.commentList.el);
-        }
+            this.$el.after(this.commentList.el);
+        },
+
+		toggleComments: function() {
+
+		},
+
+		commentCount: function() {
+
+		}
 
     });
 
