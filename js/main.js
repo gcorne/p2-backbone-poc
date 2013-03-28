@@ -7,6 +7,7 @@ Backbone.sync = function(method, model, options) {
 	params.url = ajaxUrl;
 	params.cache = false;
 	params.data = {};
+
 	// WordPress ajax action
 	params.data.action = model.action;
 	params.data.method = method;
@@ -46,6 +47,7 @@ jQuery(function() {
 		initialize: function(attributes) {
 			if(_.has(attributes, 'children')) {
 				this.children = new P3.CommentList(attributes.children);
+				this.children.post = this.collection.post;
 				this.unset('children', {silent: true});
 			}
 		},
@@ -54,7 +56,6 @@ jQuery(function() {
     P3.CommentList = Backbone.Collection.extend({
 		model: P3.Comment,
 		action: 'p3_comments',
-		parent_id: 0,
 		load: function() {
 			this.fetch({ data: { action: this.action, post_id: this.post.id }});
 		},
@@ -111,7 +112,13 @@ jQuery(function() {
 			var name = this.$el.find('form [name="name"]').val();
 			var email = this.$el.find('form [name="email"]').val();
 			var comment = this.$el.find('form [name="comment"]').val();
-			this.model.collection.create({ comment_author: name, comment_content: comment, comment_author_email: email, comment_post_ID: this.model.collection.post.id });
+			this.model.collection.create({
+				comment_author: name,
+				comment_content: comment,
+				comment_author_email: email,
+				comment_post_ID: this.model.collection.post.id,
+				comment_parent: this.model.get('comment_ID')
+			});
 			this.$el.find('form').remove();
 			e.preventDefault();
 		}

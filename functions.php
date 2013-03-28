@@ -2,7 +2,7 @@
 
 
 class P3 {
-	
+
 	static function bind_hooks() {
 		add_action( 'wp_head', array( __CLASS__, 'enqueue_scripts' ), 1, 1 );
 		add_action( 'wp_head', array( __CLASS__, 'print_inline_js' ), 100, 1 );
@@ -24,6 +24,7 @@ class P3 {
 
 	static function print_inline_js() {
 		$ajax_url = P3_Ajax::ajaxURl();
+		// info about the current user
 ?>
 		<script>
 			var ajaxUrl = '<?php echo $ajax_url; ?>';
@@ -56,7 +57,7 @@ class P3_Ajax {
 		$posts = new P3_Posts( $query );
 		$posts->json_response();
 	}
-	
+
 	static function comment() {
 		if ( isset( $_POST ) ) {
 			$comment = (array) json_decode( stripslashes( $_POST['model'] ) );
