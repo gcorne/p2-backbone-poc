@@ -16,15 +16,15 @@ class P3 {
 
 	static function enqueue_scripts() {
 		wp_enqueue_style( 'p3-bootstrap', get_stylesheet_directory_uri() . '/css/bootstrap.css', array(), '2.2.2' );
-		wp_enqueue_script( 'p3-bootstrap', get_stylesheet_directory_uri() . '/js/bootstrap.js', array(), '2.2.2' );
-		wp_enqueue_script( 'p3-underscore', get_stylesheet_directory_uri() . '/js/underscore.js', array(), '1.4.3' );
-		wp_enqueue_script( 'p3-backbone', get_stylesheet_directory_uri() . '/js/backbone.js', array( 'p3-underscore', 'jquery' ), '0.9.10' );
-		wp_enqueue_script( 'p3-main', get_stylesheet_directory_uri() . '/js/main.js', array( 'jquery', 'p3-backbone' ), '1.0' );
+		wp_enqueue_script( 'p3-bootstrap', get_stylesheet_directory_uri() . '/js/bootstrap.js', array( 'jquery' ), '2.2.2' );
+		wp_enqueue_script( 'p3-jsx-transformer', get_stylesheet_directory_uri() . '/js/jsx-transformer-0.8.0.js', array(), '0.8' );
+		wp_enqueue_script( 'p3-react', get_stylesheet_directory_uri() . '/js/react-0.8.0.js', array(), '0.8' );
+		wp_enqueue_script( 'p3-react.backbone', get_stylesheet_directory_uri() . '/js/react.backbone.js', array( 'backbone' ), '0.1' );
+		wp_enqueue_script( 'p3-main', get_stylesheet_directory_uri() . '/js/main.js', array( 'jquery', 'backbone', 'underscore' ), '1.0' );
 	}
 
 	static function print_inline_js() {
 		$ajax_url = P3_Ajax::ajaxURl();
-		// info about the current user
 ?>
 		<script>
 			var ajaxUrl = '<?php echo $ajax_url; ?>';
@@ -116,6 +116,9 @@ class P3_Posts {
 		foreach ( (array) $this->query->posts as $wp_post ) {
 			$post = new StdClass;
 			$this->copy_properties( $post, $wp_post );
+            if ( empty( $post->post_title ) ) {
+                $post->post_title = '(no title)';
+            }
 			$this->add_meta( $post );
 			$this->posts[] = $post;
 		}

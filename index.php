@@ -12,7 +12,11 @@ jQuery(function() {
 
 <script id="post-tmpl" type="text/template">
 	<h3><a href="<%- permalink %>"><%- post_title %></a></h3>
+    <div class="content">
+    <%- post_content %>
+    </div>
 	<span class="comments"><%- comment_count %> comments</span>
+    <div class="comments"></div>
 </script>
 
 <script id="comment-tmpl" type="text/template">

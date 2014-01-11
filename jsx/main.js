@@ -160,18 +160,18 @@ jQuery(function() {
 			}
 			if(nodes) {
 				childNodes = nodes.map(function(model) {
-				return ( React.DOM.li(null, CommentsTree( {model:model} )) );
+				return ( <li><CommentsTree model={model} /></li> );
 			} );
 			}
 			return (
-			React.DOM.div(null, 
-				React.DOM.p(null, 
-				this.props.model.get( 'comment_content')
-				),
-				React.DOM.ul(null, 
-				childNodes
-				)
-			)
+			<div>
+				<p>
+				{this.props.model.get( 'comment_content')}
+				</p>
+				<ul>
+				{childNodes}
+				</ul>
+			</div>
 			);
 		}
 	});
