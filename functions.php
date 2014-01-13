@@ -3,6 +3,8 @@
 
 class P3 {
 
+	const BOOTSTRAP_VERSION = '3.0.3';
+
 	static function bind_hooks() {
 		add_action( 'wp_head', array( __CLASS__, 'enqueue_scripts' ), 1, 1 );
 		add_action( 'wp_ajax_nopriv_p3_posts', array( 'P3_Ajax', 'posts' ) );
@@ -14,8 +16,11 @@ class P3 {
 	}
 
 	static function enqueue_scripts() {
-		wp_enqueue_style( 'p3-bootstrap', get_stylesheet_directory_uri() . '/css/bootstrap.css', array(), '2.2.2' );
-		wp_enqueue_script( 'p3-bootstrap', get_stylesheet_directory_uri() . '/js/bootstrap.js', array( 'jquery' ), '2.2.2' );
+
+		wp_enqueue_style( 'p3-bootstrap', get_stylesheet_directory_uri() . '/css/bootstrap.css', array(), self::BOOTSTRAP_VERSION );
+		wp_enqueue_style( 'p3-bootstrap-theme', get_stylesheet_directory_uri() . '/css/bootstrap-theme.css', array( 'p3-bootstrap' ), self::BOOTSTRAP_VERSION );
+		wp_enqueue_style( 'p3-main', get_stylesheet_uri(), array( 'p3-bootstrap-theme' ) );
+		wp_enqueue_script( 'p3-bootstrap', get_stylesheet_directory_uri() . '/js/bootstrap.js', array( 'jquery' ), self::BOOTSTRAP_VERSION );
 		wp_enqueue_script( 'p3-main', get_stylesheet_directory_uri() . '/js/main.js', array( 'jquery', 'backbone' ), '1.0' );
 
         $data = array( 'ajaxUrl' => P3_Ajax::ajax_url() );
