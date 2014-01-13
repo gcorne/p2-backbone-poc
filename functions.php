@@ -15,10 +15,8 @@ class P3 {
 
 	static function enqueue_scripts() {
 		wp_enqueue_style( 'p3-bootstrap', get_stylesheet_directory_uri() . '/css/bootstrap.css', array(), '2.2.2' );
-		wp_enqueue_script( 'p3-bootstrap', get_stylesheet_directory_uri() . '/js/bootstrap.js', array(), '2.2.2' );
-		wp_enqueue_script( 'p3-underscore', get_stylesheet_directory_uri() . '/js/underscore.js', array(), '1.4.3' );
-		wp_enqueue_script( 'p3-backbone', get_stylesheet_directory_uri() . '/js/backbone.js', array( 'p3-underscore', 'jquery' ), '0.9.10' );
-		wp_enqueue_script( 'p3-main', get_stylesheet_directory_uri() . '/js/main.js', array( 'jquery', 'p3-backbone' ), '1.0' );
+		wp_enqueue_script( 'p3-bootstrap', get_stylesheet_directory_uri() . '/js/bootstrap.js', array( 'jquery' ), '2.2.2' );
+		wp_enqueue_script( 'p3-main', get_stylesheet_directory_uri() . '/js/main.js', array( 'jquery', 'backbone' ), '1.0' );
 
         $data = array( 'ajaxUrl' => P3_Ajax::ajax_url() );
 
