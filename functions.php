@@ -89,20 +89,27 @@ class P3_Posts {
 		} else {
 			$this->query = $GLOBALS['wp_query'];
 		}
-		$this->create_posts_from_query();
+		$this->set_posts_from_query();
 	}
 
-	function create_posts_from_query() {
-		foreach ( (array) $this->query->posts as $wp_post ) {
+	function set_posts_from_query() {
+
+        while( $this->query->have_posts() ) {
+            $this->query->the_post();
 			$post = new StdClass;
-			$this->copy_properties( $post, $wp_post );
+            $this->copy_properties( $post, $GLOBALS['post'] );
+            $post->post_content = apply_filters( 'the_content', get_the_content() );
+            $post->post_title = get_the_title();
+			if ( ! $post->post_title ) {
+				$post->post_title = __( '(no-title)' );
+			}
 			$this->add_meta( $post );
 			$this->posts[] = $post;
 		}
 	}
 
 	function copy_properties( $post, WP_Post $wp_post) {
-		$properties = array( 'ID', 'post_type', 'post_author', 'post_title', 'post_content', 'post_date_gmt', 'post_modified_gmt', 'post_parent', 'menu_order', 'comment_status', 'comment_count' );
+		$properties = array( 'ID', 'post_type', 'post_author', 'post_date_gmt', 'post_modified_gmt', 'post_parent', 'menu_order', 'comment_status', 'comment_count' );
 		foreach ( $properties as $property ) {
 			$post->$property = $wp_post->$property;
 		}
@@ -131,16 +138,22 @@ class P3_Comments {
 
 	function __construct( $comments = null ) {
 		$this->comments = $comments;
-		$this->set_avatars();
+		foreach( $this->comments as $comment ) {
+			$this->set_avatar( $comment );
+			$comment->comment_text = apply_filters( 'comment_text', get_comment_text( $comment->comment_ID ) );
+
+			// remove private data
+		    unset( $comment->comment_author_email );
+		    unset( $comment->comment_author_IP );
+		    unset( $comment->comment_karma );
+		}
 	}
 
-	function set_avatars() {
-		foreach( $this->comments as $comment ) {
-			if ( ! empty( $comment->user_id ) ) {
-				$comment->avatar = get_avatar( $comment->user_id );
-			} else {
-				$comment->avatar = get_avatar( $comment->comment_author_email );
-			}
+	function set_avatar( $comment ) {
+		if ( ! empty( $comment->user_id ) ) {
+			$comment->avatar = get_avatar( $comment->user_id );
+		} else {
+			$comment->avatar = get_avatar( $comment->comment_author_email );
 		}
 	}
 
@@ -155,7 +168,3 @@ class P3_Comments {
 	}
 }
 
-class P3_Authors {
-
-
-}

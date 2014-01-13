@@ -11,13 +11,19 @@ jQuery(function() {
 </script>
 
 <script id="post-tmpl" type="text/template">
-	<h3><a href="<%- permalink %>"><%- post_title %></a></h3>
+	<h3><a href="<%- permalink %>"><%= post_title %></a></h3>
+    <div class="content">
+        <%= post_content %>
+    </div>
 	<span class="comments"><%- comment_count %> comments</span>
 </script>
 
 <script id="comment-tmpl" type="text/template">
+	<div class="avatar">
+		<%= avatar %>
+	</div>
 	<span class="author"><%- comment_author %></span>
-	<p><%- comment_content %></p>
+	<p><%= comment_content %></p>
 	<span class="reply">reply</span>
 </script>
 
