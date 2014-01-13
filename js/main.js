@@ -1,10 +1,10 @@
-P3 = {};
-App = {};
+window.p3 = window.p3|| {};
+window.app = window.app || {};
 
 Backbone.sync = function(method, model, options) {
 	var params = {dataType: 'json'};
 
-	params.url = ajaxUrl;
+	params.url = p3.ajaxUrl;
 	params.cache = false;
 	params.data = {};
 
@@ -41,20 +41,20 @@ Backbone.sync = function(method, model, options) {
 }
 
 jQuery(function() {
-    P3.Comment = Backbone.Model.extend({
+    p3.Comment = Backbone.Model.extend({
 		action: 'p3_comment',
 		idAttribute: 'comment_ID', 
 		initialize: function(attributes) {
 			if(_.has(attributes, 'children')) {
-				this.children = new P3.CommentList(attributes.children);
+				this.children = new p3.CommentList(attributes.children);
 				this.children.post = this.collection.post;
 				this.unset('children', {silent: true});
 			}
 		},
     });
 
-    P3.CommentList = Backbone.Collection.extend({
-		model: P3.Comment,
+    p3.CommentList = Backbone.Collection.extend({
+		model: p3.Comment,
 		action: 'p3_comments',
 		load: function() {
 			this.fetch({ data: { action: this.action, post_id: this.post.id }});
@@ -84,11 +84,11 @@ jQuery(function() {
 		}
     });
 
-    P3.CommentView = Backbone.View.extend({
+    p3.CommentView = Backbone.View.extend({
 		tagName: 'li',
 		className: 'comment',
 
-		model: P3.Comment,
+		model: p3.Comment,
 		events: {
 			'click .reply:first' : 'reply',
 			'submit form': 'addComment'
@@ -98,7 +98,7 @@ jQuery(function() {
 		render: function() {
 			this.$el.html(this.template(this.model.toJSON()));
 			if(_.has(this.model, 'children')) {
-				this.children = new P3.CommentsView({ model: this.model.children });
+				this.children = new p3.CommentsView({ model: this.model.children });
 				this.$el.append(this.children.el);
 			}
 			return this;
@@ -124,7 +124,7 @@ jQuery(function() {
 		}
 	});
 
-	P3.CommentsView = Backbone.View.extend({
+	p3.CommentsView = Backbone.View.extend({
 		tagName: 'ul',
 		className: 'comments',
 		initialize: function() {
@@ -140,28 +140,28 @@ jQuery(function() {
 		},
 
 		addOne: function(comment) {
-			var view = new P3.CommentView({ model: comment });
+			var view = new p3.CommentView({ model: comment });
 			this.$el.append(view.render().el);
 		},
 	});
 
-	P3.Post = Backbone.Model.extend({
+	p3.Post = Backbone.Model.extend({
 		idAttribute: 'ID', // yuck   
 		initialize: function() {
-			this.comments = new P3.CommentList();
+			this.comments = new p3.CommentList();
 			this.comments.post = this;
 			this.comments.load();
 		},
 		// update comments if comment count changes
 	});
 
-	P3.Posts = Backbone.Collection.extend({
-		model: P3.Post,
+	p3.Posts = Backbone.Collection.extend({
+		model: p3.Post,
 		action: 'p3_posts',
 	});
 
 
-	P3.PostView = Backbone.View.extend({
+	p3.PostView = Backbone.View.extend({
 		tagName: 'div',
 		className: 'post',
 
@@ -187,38 +187,38 @@ jQuery(function() {
 
 		showComments: function() {
 			this.commentsOpen = true;
-			this.commentList = new P3.CommentsView({ model: this.model.comments });
+			this.commentList = new p3.CommentsView({ model: this.model.comments });
 			this.$el.after(this.commentList.el);
 		}
 
 	});
 
-	P3.AppView = Backbone.View.extend({
+	p3.AppView = Backbone.View.extend({
 		el: jQuery('#main'),
 
 		initialize: function() {
-			this.listenTo(App.Posts, 'add', this.addOne);
-			this.listenTo(App.Posts, 'reset', this.addAll);
+			this.listenTo(app.Posts, 'add', this.addOne);
+			this.listenTo(app.Posts, 'reset', this.addAll);
 		},
 
 
 		addAll: function() {
-			App.Posts.each(this.addOne, this);
+			app.Posts.each(this.addOne, this);
 		},
 
 		addOne: function(post) {
-			var view = new P3.PostView({ model: post });
+			var view = new p3.PostView({ model: post });
 			$container = jQuery('<div/>').addClass('container');
 			this.$el.append($container.append(view.render().el));
 		}
 
 	});
 
-	App.Posts = new P3.Posts;
-	App.View = new P3.AppView;
+	app.Posts = new p3.Posts;
+	app.View = new p3.AppView;
 
 	setInterval(function() {
-		App.Posts.fetch({update: true, remove: false});
+		app.Posts.fetch({update: true, remove: false});
 	}, 10000);
 
 });

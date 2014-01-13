@@ -6,7 +6,7 @@
 
 <script>
 jQuery(function() {
-    App.Posts.reset( <?php echo $p3_posts->to_json(); ?> );
+    app.Posts.reset( <?php echo $p3_posts->to_json(); ?> );
 });
 </script>
 
