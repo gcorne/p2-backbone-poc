@@ -3,9 +3,10 @@
 
 class P3 {
 
+	const BOOTSTRAP_VERSION = '3.0.3';
+
 	static function bind_hooks() {
 		add_action( 'wp_head', array( __CLASS__, 'enqueue_scripts' ), 1, 1 );
-		add_action( 'wp_head', array( __CLASS__, 'print_inline_js' ), 100, 1 );
 		add_action( 'wp_ajax_nopriv_p3_posts', array( 'P3_Ajax', 'posts' ) );
 		add_action( 'wp_ajax_p3_posts', array( 'P3_Ajax', 'posts' ) );
 		add_action( 'wp_ajax_nopriv_p3_comments', array( 'P3_Ajax', 'comments' ) );
@@ -15,40 +16,24 @@ class P3 {
 	}
 
 	static function enqueue_scripts() {
-		wp_enqueue_style( 'p3-bootstrap', get_stylesheet_directory_uri() . '/css/bootstrap.css', array(), '2.2.2' );
-		wp_enqueue_script( 'p3-bootstrap', get_stylesheet_directory_uri() . '/js/bootstrap.js', array( 'jquery' ), '2.2.2' );
+
+		wp_enqueue_style( 'p3-bootstrap', get_stylesheet_directory_uri() . '/css/bootstrap.css', array(), self::BOOTSTRAP_VERSION );
+		wp_enqueue_style( 'p3-bootstrap-theme', get_stylesheet_directory_uri() . '/css/bootstrap-theme.css', array( 'p3-bootstrap' ), self::BOOTSTRAP_VERSION );
+		wp_enqueue_style( 'p3-main', get_stylesheet_uri(), array( 'p3-bootstrap-theme' ) );
+		wp_enqueue_script( 'p3-bootstrap', get_stylesheet_directory_uri() . '/js/bootstrap.js', array( 'jquery' ), self::BOOTSTRAP_VERSION );
 		wp_enqueue_script( 'p3-jsx-transformer', get_stylesheet_directory_uri() . '/js/jsx-transformer-0.8.0.js', array(), '0.8' );
 		wp_enqueue_script( 'p3-react', get_stylesheet_directory_uri() . '/js/react-0.8.0.js', array(), '0.8' );
 		wp_enqueue_script( 'p3-react.backbone', get_stylesheet_directory_uri() . '/js/react.backbone.js', array( 'backbone' ), '0.1' );
-		wp_enqueue_script( 'p3-main', get_stylesheet_directory_uri() . '/js/main.js', array( 'jquery', 'backbone', 'underscore' ), '1.0' );
+		wp_enqueue_script( 'p3-main', get_stylesheet_directory_uri() . '/js/main.js', array( 'jquery', 'backbone' ), '1.0' );
+
+        $data = array( 'ajaxUrl' => P3_Ajax::ajax_url() );
+
+        wp_localize_script( 'p3-main', 'p3', $data );
 	}
-
-	static function print_inline_js() {
-		$ajax_url = P3_Ajax::ajaxURl();
-?>
-		<script>
-			var ajaxUrl = '<?php echo $ajax_url; ?>';
-		</script>
-<?php
-	}
-
-
 
 }
 
 add_action( 'init', array( 'P3', 'bind_hooks' ) );
-
-abstract class P3_Model {
-
-
-}
-
-
-// Adapter that adapts WP_Post to our post intended for more public view.
-class P3_Post {
-
-}
-
 
 class P3_Ajax {
 
@@ -79,6 +64,10 @@ class P3_Ajax {
 	static function comments() {
 		$post_id = (int) $_REQUEST['post_id'];
 
+		if ( empty ( $post_id ) ) {
+			wp_die();
+		}
+
 		$query = new WP_Comment_Query;
 		$comments = $query->query( array( 'post_id' => $post_id ) );
 		$p3_comments = new P3_Comments( $comments );
@@ -86,18 +75,19 @@ class P3_Ajax {
 
 	}
 
-	static function ajaxURL() {
-		global $current_blog;
+	static function ajax_url() {
+		$blog_id = get_current_blog_id();
+		$blog = get_blog_details( $blog_id );
 
 		// Generate the ajax url based on the current scheme
 		$admin_url = admin_url( 'admin-ajax.php', is_ssl() ? 'https' : 'http' );
+
 		// If present, take domain mapping into account
-		if ( isset( $current_blog->primary_redirect ) )
-			$admin_url = preg_replace( '|https?://' . preg_quote( $current_blog->domain ) . '|', 'http://' . $current_blog->primary_redirect, $admin_url );
+		if ( isset( $blog->primary_redirect ) )
+			$admin_url = preg_replace( '|https?://' . preg_quote( $blog->domain ) . '|', 'http://' . $blog->primary_redirect, $admin_url );
 		return $admin_url;
 	}
 }
-
 
 
 class P3_Posts {
@@ -109,23 +99,27 @@ class P3_Posts {
 		} else {
 			$this->query = $GLOBALS['wp_query'];
 		}
-		$this->create_posts_from_query();
+		$this->set_posts_from_query();
 	}
 
-	function create_posts_from_query() {
-		foreach ( (array) $this->query->posts as $wp_post ) {
+	function set_posts_from_query() {
+
+        while( $this->query->have_posts() ) {
+            $this->query->the_post();
 			$post = new StdClass;
-			$this->copy_properties( $post, $wp_post );
-            if ( empty( $post->post_title ) ) {
-                $post->post_title = '(no title)';
-            }
+            $this->copy_properties( $post, $GLOBALS['post'] );
+            $post->post_content = apply_filters( 'the_content', get_the_content() );
+            $post->post_title = get_the_title();
+			if ( ! $post->post_title ) {
+				$post->post_title = __( '(no-title)' );
+			}
 			$this->add_meta( $post );
 			$this->posts[] = $post;
 		}
 	}
 
 	function copy_properties( $post, WP_Post $wp_post) {
-		$properties = array( 'ID', 'post_type', 'post_author', 'post_title', 'post_content', 'post_date_gmt', 'post_modified_gmt', 'post_parent', 'menu_order', 'comment_status', 'comment_count' );
+		$properties = array( 'ID', 'post_type', 'post_author', 'post_date_gmt', 'post_modified_gmt', 'post_parent', 'menu_order', 'comment_status', 'comment_count' );
 		foreach ( $properties as $property ) {
 			$post->$property = $wp_post->$property;
 		}
@@ -154,16 +148,22 @@ class P3_Comments {
 
 	function __construct( $comments = null ) {
 		$this->comments = $comments;
-		$this->set_avatars();
+		foreach( $this->comments as $comment ) {
+			$this->set_avatar( $comment );
+			$comment->comment_text = apply_filters( 'comment_text', get_comment_text( $comment->comment_ID ) );
+
+			// remove private data
+		    unset( $comment->comment_author_email );
+		    unset( $comment->comment_author_IP );
+		    unset( $comment->comment_karma );
+		}
 	}
 
-	function set_avatars() {
-		foreach( $this->comments as $comment ) {
-			if ( ! empty( $comment->user_id ) ) {
-				$comment->avatar = get_avatar( $comment->user_id );
-			} else {
-				$comment->avatar = get_avatar( $comment->comment_author_email );
-			}
+	function set_avatar( $comment ) {
+		if ( ! empty( $comment->user_id ) ) {
+			$comment->avatar = get_avatar( $comment->user_id );
+		} else {
+			$comment->avatar = get_avatar( $comment->comment_author_email );
 		}
 	}
 
@@ -178,7 +178,3 @@ class P3_Comments {
 	}
 }
 
-class P3_Authors {
-
-
-}

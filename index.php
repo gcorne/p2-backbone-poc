@@ -6,22 +6,25 @@
 
 <script>
 jQuery(function() {
-    App.Posts.reset( <?php echo $p3_posts->to_json(); ?> );
+    app.Posts.reset( <?php echo $p3_posts->to_json(); ?> );
 });
 </script>
 
 <script id="post-tmpl" type="text/template">
-	<h3><a href="<%- permalink %>"><%- post_title %></a></h3>
+	<h3><a href="<%- permalink %>"><%= post_title %></a></h3>
     <div class="content">
-    <%- post_content %>
+        <%= post_content %>
     </div>
 	<span class="comments"><%- comment_count %> comments</span>
     <div class="comments"></div>
 </script>
 
 <script id="comment-tmpl" type="text/template">
+	<div class="avatar">
+		<%= avatar %>
+	</div>
 	<span class="author"><%- comment_author %></span>
-	<p><%- comment_content %></p>
+	<p><%= comment_content %></p>
 	<span class="reply">reply</span>
 </script>
 
