@@ -58,6 +58,10 @@ class P3_Ajax {
 	static function comments() {
 		$post_id = (int) $_REQUEST['post_id'];
 
+		if ( empty ( $post_id ) ) {
+			wp_die();
+		}
+
 		$query = new WP_Comment_Query;
 		$comments = $query->query( array( 'post_id' => $post_id ) );
 		$p3_comments = new P3_Comments( $comments );
