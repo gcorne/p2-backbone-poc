@@ -10,29 +10,4 @@ jQuery(function() {
 });
 </script>
 
-<script id="post-tmpl" type="text/template">
-	<h3><a href="<%- permalink %>"><%= post_title %></a></h3>
-    <div class="content">
-        <%= post_content %>
-    </div>
-	<span class="comments"><%- comment_count %> comments</span>
-    <div class="comments"></div>
-</script>
-
-<script id="comment-tmpl" type="text/template">
-	<div class="avatar">
-		<%= avatar %>
-	</div>
-	<span class="author"><%- comment_author %></span>
-	<p><%= comment_content %></p>
-	<span class="reply">reply</span>
-</script>
-
-<script id="reply-tmpl" type="text/template">
-    <form>
-    <label for="">Name</label><input id="" type="text" name="name" />
-    <label for="">Email</label><input id="" type="text" name="email" />
-    <textarea id="" name="comment"></textarea><button>reply</button>
-    </form>
-</script>
 <?php get_footer(); ?>

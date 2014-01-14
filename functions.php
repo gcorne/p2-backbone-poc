@@ -21,12 +21,17 @@ class P3 {
 		wp_enqueue_style( 'p3-bootstrap-theme', get_stylesheet_directory_uri() . '/css/bootstrap-theme.css', array( 'p3-bootstrap' ), self::BOOTSTRAP_VERSION );
 		wp_enqueue_style( 'p3-main', get_stylesheet_uri(), array( 'p3-bootstrap-theme' ) );
 		wp_enqueue_script( 'p3-bootstrap', get_stylesheet_directory_uri() . '/js/bootstrap.js', array( 'jquery' ), self::BOOTSTRAP_VERSION );
-		wp_enqueue_script( 'p3-jsx-transformer', get_stylesheet_directory_uri() . '/js/jsx-transformer-0.8.0.js', array(), '0.8' );
 		wp_enqueue_script( 'p3-react', get_stylesheet_directory_uri() . '/js/react-0.8.0.js', array(), '0.8' );
 		wp_enqueue_script( 'p3-react.backbone', get_stylesheet_directory_uri() . '/js/react.backbone.js', array( 'backbone' ), '0.1' );
 		wp_enqueue_script( 'p3-main', get_stylesheet_directory_uri() . '/js/main.js', array( 'jquery', 'backbone' ), '1.0' );
 
+
         $data = array( 'ajaxUrl' => P3_Ajax::ajax_url() );
+
+		if ( is_user_logged_in() ) {
+			$current_user = wp_get_current_user();
+			$data['currentUser'] = $current_user->ID;
+		}
 
         wp_localize_script( 'p3-main', 'p3', $data );
 	}
@@ -48,9 +53,14 @@ class P3_Ajax {
 			$comment = (array) json_decode( stripslashes( $_POST['model'] ) );
 			switch( $_POST['method'] ) {
 				case 'create':
+					if ( $comment['user_id'] == get_current_user_id() ) {
+						$user = wp_get_current_user();
+						$comment['comment_author'] = $user->display_name;
+					}
 					$id = wp_insert_comment( $comment );
 					if ( $id ) {
-						$inserted_comment = get_comment( $id );
+						$inserted_comment = new P3_Comment( get_comment( $id ) );
+
 						header('Content-type: application/json');
 						echo json_encode( $inserted_comment );
 						die();
@@ -63,6 +73,7 @@ class P3_Ajax {
 
 	static function comments() {
 		$post_id = (int) $_REQUEST['post_id'];
+
 
 		if ( empty ( $post_id ) ) {
 			wp_die();
@@ -144,26 +155,37 @@ class P3_Posts {
 
 }
 
-class P3_Comments {
+class P3_Comment {
 
-	function __construct( $comments = null ) {
-		$this->comments = $comments;
-		foreach( $this->comments as $comment ) {
-			$this->set_avatar( $comment );
-			$comment->comment_text = apply_filters( 'comment_text', get_comment_text( $comment->comment_ID ) );
+	function __construct( $comment ) {
+		 foreach ( get_object_vars( $comment ) as $key => $value ) {
+			if ( in_array( $key, array( 'comment_author_email', 'comment_author_IP', 'comment_karma' ) ) ) {
+				continue;
+			}
+            $this->$key = $value;
+        }
+		$this->set_avatar();
+		$this->comment_text = apply_filters( 'comment_text', get_comment_text( $this->comment_ID ) );
+	}
 
-			// remove private data
-		    unset( $comment->comment_author_email );
-		    unset( $comment->comment_author_IP );
-		    unset( $comment->comment_karma );
+	function set_avatar() {
+		if ( ! empty( $this->user_id ) ) {
+			$this->avatar = get_avatar( $this->user_id );
+		} else {
+			$this->avatar = get_avatar( $this->comment_author_email );
 		}
 	}
 
-	function set_avatar( $comment ) {
-		if ( ! empty( $comment->user_id ) ) {
-			$comment->avatar = get_avatar( $comment->user_id );
-		} else {
-			$comment->avatar = get_avatar( $comment->comment_author_email );
+
+}
+
+
+class P3_Comments {
+
+	function __construct( $comments = null ) {
+		$this->comments = array();
+		foreach( $comments as $comment ) {
+			$this->comments[] = new P3_Comment( $comment );
 		}
 	}
 
